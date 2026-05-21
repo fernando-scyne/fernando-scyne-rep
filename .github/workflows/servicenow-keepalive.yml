@@ -1,0 +1,35 @@
+name: ServiceNow PDI Keep-Alive
+
+on:
+  schedule:
+    # Run at 08:00 UTC every 5 days.
+    # GitHub cron does not support "every N days" natively, so this runs on
+    # days 1, 6, 11, 16, 21, 26, 31 of each month — never more than 5 days apart.
+    - cron: '0 8 1,6,11,16,21,26,31 * *'
+  workflow_dispatch: {}   # allow manual trigger from the Actions tab
+
+jobs:
+  keepalive:
+    name: Ping ServiceNow PDI
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run keep-alive agent
+        env:
+          SN_INSTANCE_URL: ${{ secrets.SN_INSTANCE_URL }}
+          SN_USERNAME: ${{ secrets.SN_USERNAME }}
+          SN_PASSWORD: ${{ secrets.SN_PASSWORD }}
+        working-directory: agent
+        run: python keepalive.py
